@@ -4,7 +4,6 @@ import { useState } from "react";
 const THEMES = ["Productividad médica","Historia clínica digital","IA en medicina","Comunidad médica","Interconsultas","Gestión de consultorio","Cursos y formación","Testimonios / casos de uso","Tip rápido B-Doctor","Motivación profesional"];
 const NETWORKS = ["LinkedIn","Instagram","Facebook","Twitter/X"];
 const TONES = ["Educativo","Inspirador","Directo / vendedor","Humorístico / cercano"];
-const SYSTEM_PROMPT = `Eres el community manager de B-Doctor, una plataforma médica argentina que combina CRM clínico, red profesional médica, comunidad, interconsultas online e inteligencia artificial. La B significa Buen Doctor. Generá contenido en español rioplatense. Respondé SOLO con este JSON sin backticks: {"post":"texto del post","imagePrompt":"prompt en inglés para imagen","tip":"consejo de implementación"}`;
 
 export default function Home() {
   const [theme, setTheme] = useState(THEMES[0]);
@@ -20,20 +19,13 @@ export default function Home() {
     setResult(null);
     const finalTheme = customTheme.trim() || theme;
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: `Red: ${network} | Tema: ${finalTheme} | Tono: ${tone}` }],
-        }),
+        body: JSON.stringify({ tone, network, theme: finalTheme }),
       });
-      const data = await res.json();
-      const text = data.content?.map((b) => b.text || "").join("") || "";
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-      setResult(parsed);
+      const result = await res.json();
+      setResult(result);
     } catch (e) {
       setResult({ error: "Error generando contenido. Intentá de nuevo." });
     }
